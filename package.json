@@ -1,0 +1,19 @@
+{
+  "name": "leadforge-360",
+  "version": "1.0.0",
+  "description": "LeadForge 360 — AI-native lead management portal (AB7 Solutions)",
+  "main": "db-server.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env.local db-server.js",
+    "dev": "node --watch --env-file-if-exists=.env.local db-server.js",
+    "seed": "node --env-file-if-exists=.env.local scripts/seed-supabase.js"
+  },
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

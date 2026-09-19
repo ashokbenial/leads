@@ -1,0 +1,19 @@
+# Keep the Vercel deployment small AND free of sensitive files.
+# The datastore is Supabase — nothing data-bearing belongs in the bundle.
+
+# Local datastore cache + backups — must NOT be deployed (would be a data leak).
+data/
+backups/
+
+# Secrets (also gitignored, but belt-and-suspenders).
+.env
+.env.*
+
+# Docs / plans — not needed at runtime.
+*.docx
+*.md
+Docs/
+AB7-Brand-Guidelines-Portal.html
+
+# One-off scripts (seeding/inspection) — run locally, not on Vercel.
+scripts/

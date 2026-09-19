@@ -1,0 +1,28 @@
+# Dependencies (never commit; regenerated via npm install)
+node_modules/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# Corrupt-file recovery snapshots created during repair
+data/*.corrupt-*.json
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vercel
+.env*
+
+# Backups & the local datastore — contain PII + password hashes. Never commit.
+backups/
+data/leadforge.json
+data/*.sqlite*
+data/*.backup-*.json
+data/*.json

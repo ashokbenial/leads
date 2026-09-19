@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LeadForge 360 — AB7 Solutions</title>
+<meta name="description" content="AI-native Lead Management Portal by AB7 Solutions.">
+<link rel="icon" href="logo-no-background.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- FIRST-RUN SETUP — shown only when no admin credentials exist yet -->
+<div id="setup-screen" class="hidden">
+  <div class="login-card">
+    <div class="login-brand">
+      <img src="logo-no-background.png" alt="AB7">
+      <div><div class="t">LeadForge 360</div><div class="s">Initial setup</div></div>
+    </div>
+    <h1>Create your <em>admin account</em></h1>
+    <p class="lede">Set the credentials you'll use to sign in. This screen disappears once you save and won't be reachable from a normal sign-in.</p>
+    <form id="setup-form" onsubmit="event.preventDefault();LF.auth.setupAdmin();">
+      <div class="field"><label>Work email</label><input type="email" id="setup-email" required autocomplete="username" placeholder="you@company.com"></div>
+      <div class="field"><label>Password (8+ chars)</label><input type="password" id="setup-pass" required minlength="8" autocomplete="new-password"></div>
+      <div class="field"><label>Confirm password</label><input type="password" id="setup-pass2" required minlength="8" autocomplete="new-password"></div>
+      <button type="submit" class="login-btn">Create admin →</button>
+    </form>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN (visible until LF.auth.login succeeds) -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">
+      <img src="logo-no-background.png" alt="AB7">
+      <div><div class="t">LeadForge 360</div><div class="s">AB7 Solutions</div></div>
+    </div>
+    <h1>Welcome back to <em>LeadForge</em></h1>
+    <p class="lede">Sign in to your AI-native revenue workspace.</p>
+    <form id="login-form" onsubmit="event.preventDefault();LF.auth.login(document.getElementById('login-email').value,document.getElementById('login-pass').value);">
+      <div class="field"><label>Work email</label><input type="email" id="login-email" autocomplete="username" placeholder="you@company.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-pass" autocomplete="current-password"></div>
+      <button type="submit" class="login-btn">Sign in →</button>
+    </form>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app-shell" class="app hidden">
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="document.getElementById('sidebar').classList.remove('show');this.classList.remove('show');"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <img src="logo-no-background.png" alt="AB7">
+      <div><div class="t">LeadForge 360</div><div class="s">AB7 · v1.0</div></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Workspace</div>
+      <div class="sb-link" data-route="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</div>
+      <div class="sb-link" data-route="leads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Leads<span class="badge" id="sb-leads-count">0</span></div>
+      <div class="sb-link" data-route="allClients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h18M3 12h18M3 19h18"/></svg>All Clients<span class="badge" id="sb-all-count">0</span></div>
+      <div class="sb-link" data-route="pipeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="4" height="16"/><rect x="10" y="8" width="4" height="12"/><rect x="17" y="12" width="4" height="8"/></svg>Pipeline</div>
+      <div class="sb-link" data-route="activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activity Timeline</div>
+      <div class="sb-link" data-route="mail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Mail<span class="badge" id="sb-mail-count">0</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Intelligence</div>
+      <div class="sb-link" data-route="scoring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5 2 7L12 17l-6.5 3.5 2-7L2 9h7z"/></svg>Scoring &amp; Qualification</div>
+      <div class="sb-link" data-route="analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Revenue Intelligence</div>
+      <div class="sb-link" data-route="wonLeads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Won Leads<span class="badge" id="sb-won-count">0</span></div>
+      <div class="sb-link" data-route="lostLeads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Lost Leads<span class="badge" id="sb-lost-count">0</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Data &amp; CDP</div>
+      <div class="sb-link" data-route="cdp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Customer Data Platform</div>
+      <div class="sb-link" data-route="subvendors"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Sub-Vendors<span class="badge" id="sb-subvendors-count">0</span></div>
+      <div class="sb-link" data-route="partners"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0L12 5.35l-.77-.77a5.4 5.4 0 0 0-7.65 7.65l.77.77L12 20.66l7.65-7.66.77-.77a5.4 5.4 0 0 0 0-7.65z"/></svg>Partners<span class="badge" id="sb-partners-count">0</span></div>
+      <div class="sb-link" data-route="jobPostings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v4H4z"/><path d="M6 12h12"/><path d="M6 16h8"/><path d="M4 8v12h16V8"/></svg>Job Postings<span class="badge" id="sb-postings-count">0</span></div>
+      <div class="sb-link" data-route="jobApplicants"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Job Applicants<span class="badge" id="sb-jobs-count">0</span></div>
+      <div class="sb-link" data-route="conversion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Conversion &amp; Handoff</div>
+      <div class="sb-link" data-route="collab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Collaboration</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Platform</div>
+      <div class="sb-link" data-route="customization"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Customization</div>
+      <div class="sb-link" data-route="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Settings</div>
+    </div>
+    <div class="sb-foot">Collaborate More · Grow More<br><span style="color:var(--ab7-sky);font-weight:700">AB7 Solutions · 2026</span></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" type="button" aria-label="Open menu" onclick="document.getElementById('sidebar').classList.toggle('show');document.getElementById('sidebar-backdrop').classList.toggle('show');">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="tb-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search leads, accounts, deals, people…" id="global-search">
+        <kbd>Ctrl K</kbd>
+      </div>
+      <div class="tb-spacer"></div>
+      <button class="btn btn-primary btn-sm" style="margin-right:2px" onclick="LF.email&&LF.email.compose&&LF.email.compose()" title="Compose email">✉ Compose</button>
+      <span id="db-pill" class="tag slate" style="margin-right:8px;padding:5px 10px;font-size:11px;cursor:pointer">⊘ Offline · localStorage</span>
+      <button class="tb-ai" onclick="LF.cmd&&LF.cmd.open&&LF.cmd.open()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        Ask LeadForge AI
+      </button>
+      <button class="tb-btn" title="Notifications" onclick="LF.notifications&&LF.notifications.show&&LF.notifications.show()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="dot"></span>
+      </button>
+      <button class="tb-btn" title="Help" onclick="LF.help&&LF.help.open&&LF.help.open()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <div class="tb-user" onclick="LF.router&&LF.router.go&&LF.router.go('settings')">
+        <div class="avatar" id="tb-avatar">AB</div>
+        <div><div class="nm" id="tb-username">Ashok Benial</div><div class="rl">Admin · AB7</div></div>
+      </div>
+    </header>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="LF.drawer&&LF.drawer.close&&LF.drawer.close();LF.modal&&LF.modal.close&&LF.modal.close()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head"><h3 id="drawer-title">Drawer</h3>
+    <button class="tb-btn" onclick="LF.drawer&&LF.drawer.close&&LF.drawer.close()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+  <div class="drawer-foot" id="drawer-foot"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="modal-title">Modal</h3>
+      <button class="tb-btn" onclick="LF.modal&&LF.modal.close&&LF.modal.close()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<div class="command-palette" id="cmd">
+  <input type="text" id="cmd-input" placeholder="Ask LeadForge AI or type a command…">
+  <div class="results" id="cmd-results"></div>
+  <div class="foot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> run · <kbd>Esc</kbd> close</span><span>Powered by Claude</span></div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<div class="scroll-ctrl" id="scroll-ctrl" aria-hidden="true">
+  <button type="button" id="scroll-up" onclick="LF.scrollCtrl&&LF.scrollCtrl.up&&LF.scrollCtrl.up()">▲</button>
+  <button type="button" id="scroll-top" onclick="LF.scrollCtrl&&LF.scrollCtrl.to&&LF.scrollCtrl.to('top')">⇱</button>
+  <button type="button" id="scroll-bottom" onclick="LF.scrollCtrl&&LF.scrollCtrl.to&&LF.scrollCtrl.to('bottom')">⇲</button>
+  <button type="button" id="scroll-down" onclick="LF.scrollCtrl&&LF.scrollCtrl.down&&LF.scrollCtrl.down()">▼</button>
+</div>
+
+<!-- Main application -->
+<script src="js/app.js"></script>
+
+<script>
+/* Close mobile sidebar when a sidebar link is tapped */
+document.addEventListener("click", function(e){
+  var link = e.target.closest && e.target.closest(".sb-link");
+  if(!link) return;
+  if(window.innerWidth <= 900){
+    var sb = document.getElementById("sidebar");
+    var bd = document.getElementById("sidebar-backdrop");
+    if(sb) sb.classList.remove("show");
+    if(bd) bd.classList.remove("show");
+  }
+});
+</script>
+</body>
+</html>

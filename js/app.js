@@ -9,7 +9,7 @@ window.LF = LF; // expose for inline handlers + test harnesses
 const FIRST_NAMES = ["Priya","Arjun","Ravi","Ananya","Rohan","Neha","Vikram","Sneha","Aditya","Meera","Karan","Divya","Rahul","Pooja","Sanjay","Ishita","Amit","Riya","Kabir","Tanvi","Omar","Layla","Hassan","Noura","Faisal","Aisha","Yusuf","Zainab","James","Olivia","Michael","Emma","David","Sophia","Chen","Li","Hiroshi","Yuki","Arun","Kavya","Nikhil","Aarti","Deepak","Shreya","Vivek","Nisha","Raj","Kritika","Saad","Huda"];
 const LAST_NAMES = ["Sharma","Patel","Kumar","Singh","Verma","Reddy","Gupta","Joshi","Shah","Desai","Iyer","Menon","Al Maktoum","Al Qasimi","Hassan","Khan","Tan","Lim","Chen","Suzuki","Nakamura","Smith","Johnson","Williams","Brown","Bernal","Ramirez","Silva","Costa","Oliveira","Benial","Kaushik","Das","Dutta","Mukherjee","Saxena","Agarwal","Mehta","Chopra","Kapoor","Malhotra"];
 const COMPANIES = ["Nexora Solutions","Bharat Infotech","Gulf Logistics LLC","Oasis Realty","Silverline Clinics","MediCore Health","Kaizen Analytics","Zenith Retail","Polaris Consulting","Helix Pharma","Orbit Education","Summit Capital","Crescent Exports","DesertLink Media","Meridian Builders","Indus Steel","Velvet Hospitality","FinEdge Advisors","Skyline Motors","NimbusCloud","PixelForge","SunriseAgri","TrueNorth Legal","BrightPath Schools","AeroLogix","HealthBridge","GreenLeaf Organics","Cobalt Security","Apex Industries","Stellar IoT"];
-const SOURCES = ["Meta Lead Ads","LinkedIn Lead Gen","Google Ads","Website Form","IndiaMART","JustDial","WhatsApp","Event - Dubai Expo","Event - Bengaluru Summit","Referral","Cold Outbound","Chatbot","Apollo","TikTok Lead Gen"];
+const SOURCES = ["Meta Lead Ads","LinkedIn Lead Gen","Google Ads","Website Form","Consultation Form","IndiaMART","JustDial","WhatsApp","Event - Dubai Expo","Event - Bengaluru Summit","Referral","Cold Outbound","Chatbot","Apollo","TikTok Lead Gen"];
 const INDUSTRIES = ["SaaS","Real Estate","Healthcare","BFSI","Education","Retail","Manufacturing","Hospitality","Logistics","Pharma","Legal","Media"];
 const CITIES = [["Mumbai","IN"],["Bengaluru","IN"],["Delhi","IN"],["Hyderabad","IN"],["Pune","IN"],["Chennai","IN"],["Dubai","AE"],["Abu Dhabi","AE"],["Doha","QA"],["Riyadh","SA"],["Singapore","SG"],["Jakarta","ID"],["London","GB"],["New York","US"],["San Francisco","US"],["Sydney","AU"]];
 const STAGES = ["New","Contacted","Qualified","Demo","Proposal","Won","Lost"];
@@ -65,7 +65,7 @@ LF.score = {
   // more weight. Tuned to match the seeded SOURCES list.
   _sourcePts: {
     "LinkedIn Lead Gen":10, "Referral":10, "Inbound":9,
-    "Website Form":7, "Webinar":7, "Event":6,
+    "Website Form":7, "Consultation Form":7, "Webinar":7, "Event":6,
     "Cold Outbound":4, "Cold Email":4, "Cold Call":4
   },
   compute(lead){
@@ -3156,7 +3156,7 @@ LF.views.renderLeadRows = function(){
         <td><div class="who"><div class="avatar-sm ${l.tags.includes('hot')?'g2':''}">${initials(l.name)}</div>
           <div><div style="font-weight:700;color:var(--ink-900)">${escapeHtml(l.name)}</div>
           <div style="font-size:11.5px;color:var(--ink-400)">${escapeHtml(l.email)}</div></div></div></td>
-        <td><div style="font-weight:600">${escapeHtml(l.company)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml(l.city)}, ${l.country}</div></td>
+        <td><div style="font-weight:600">${escapeHtml(l.company)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml([l.city,l.country].filter(Boolean).join(", "))}</div></td>
         <td><span class="tag ${STAGE_COLORS[l.stage]}">${l.stage}</span></td>
         <td><span class="score-pill ${scoreClass}">${l.score}</span></td>
         <td style="font-weight:700;font-family:var(--font-mono);color:var(--ab7-green-deep);font-size:12.5px">${fmtCur(l.amount,l.currency)}</td>
@@ -4308,7 +4308,7 @@ LF.views.renderPipelineList = function(){
             const sc = LF.formula.healthClass(l);
             return `<tr onclick="LF.views.openLeadDrawer('${l.id}')" style="cursor:pointer">
               <td><div class="who"><div class="avatar-sm ${l.tags.includes('hot')?'g2':''}">${initials(l.name)}</div><div><div style="font-weight:700">${escapeHtml(l.name)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml(l.email)}</div></div></div></td>
-              <td><div style="font-weight:600">${escapeHtml(l.company)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml(l.city)}, ${l.country}</div></td>
+              <td><div style="font-weight:600">${escapeHtml(l.company)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml([l.city,l.country].filter(Boolean).join(", "))}</div></td>
               <td><select class="filter" onclick="event.stopPropagation()" onchange="LF.views.changeStageFromList('${l.id}',this.value)">${STAGES.map(s=>`<option ${s===l.stage?'selected':''}>${s}</option>`).join("")}</select></td>
               <td style="font-family:var(--font-mono);font-weight:800;color:var(--ab7-green-deep)">${fmtCur(l.amount,l.currency)}</td>
               <td><span class="score-pill ${sc}">${l.score}</span></td>
@@ -6457,7 +6457,7 @@ LF.views.cdpRenderLedger = function(){
     const sc = LF.formula.healthClass(l);
     return `<tr>
       <td><div class="who"><div class="avatar-sm ${l.tags?.includes('hot')?'g2':''}">${initials(l.name)}</div><div><div style="font-weight:700">${escapeHtml(l.name)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml(l.email)}</div></div></div></td>
-      <td><div style="font-weight:600">${escapeHtml(l.company)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml(l.city)}, ${l.country}</div></td>
+      <td><div style="font-weight:600">${escapeHtml(l.company)}</div><div style="font-size:11px;color:var(--ink-400)">${escapeHtml([l.city,l.country].filter(Boolean).join(", "))}</div></td>
       <td><span class="tag ${STAGE_COLORS[l.stage]}">${l.stage}</span></td>
       <td><span class="score-pill ${sc}">${l.score}</span></td>
       <td><span class="tag ${qcls}">${qlabel}</span>${qst.score!==null?`<div style="font-size:10.5px;color:var(--ink-400);margin-top:2px">${qst.score}/100</div>`:''}</td>
@@ -10244,7 +10244,17 @@ LF.subvendors._renderRows = function(){
 };
 
 /* ---------------- Detail drawer ---------------- */
+// Recover the storage path from an old Supabase signed URL
+// (…/storage/v1/object/sign/<bucket>/<path>?token=…) so it can be re-signed.
+LF._storagePathFromSigned = function(link, bucket){
+  const m = /\/storage\/v1\/object\/sign\/([^/?]+)\/([^?]+)/.exec(String(link||""));
+  return m && m[1]===bucket ? decodeURIComponent(m[2]) : null;
+};
+
 LF.subvendors._fileLink = function(label, link, path){
+  if(!path || /^https?:/i.test(path)) path = LF._storagePathFromSigned(link, "vendor-docs") || path;
+  // Stored signed links expire after 7 days — re-sign the path on every click.
+  if(path && !/^https?:/i.test(path)) link = (LF.db.baseUrl||"") + "/api/files/vendor-docs?path=" + encodeURIComponent(path);
   if(link) return `<a class="btn btn-ghost btn-xs" href="${escapeHtml(link)}" target="_blank" rel="noopener">📎 ${label} ↗</a>`;
   if(path) return `<span class="tag slate" style="font-size:10.5px" title="${escapeHtml(path)}">${label}: in Supabase</span>`;
   return `<span style="font-size:11px;color:var(--ink-400)">${label}: —</span>`;
@@ -10641,7 +10651,10 @@ LF.entities.make = function(cfg){
   NS._section = function(title, rowsHtml){
     return `<div style="margin-top:14px"><div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--ab7-blue-deep);margin-bottom:4px">${escapeHtml(title)}</div>${rowsHtml}</div>`;
   };
-  NS._fileLink = function(label, link){
+  NS._fileLink = function(label, link, path, bucket){
+    if(bucket && (!path || /^https?:/i.test(path))) path = LF._storagePathFromSigned(link, bucket) || path;
+    // Stored signed links expire after 7 days — re-sign the path on every click.
+    if(path && bucket && !/^https?:/i.test(path)) link = (LF.db.baseUrl||"") + "/api/files/" + bucket + "?path=" + encodeURIComponent(path);
     if(link) return `<a class="btn btn-ghost btn-xs" href="${escapeHtml(link)}" target="_blank" rel="noopener">📎 ${escapeHtml(label)} ↗</a>`;
     return `<span style="font-size:11px;color:var(--ink-400)">${escapeHtml(label)}: —</span>`;
   };
@@ -10657,7 +10670,7 @@ LF.entities.make = function(cfg){
       return NS._section(sec.title, rowsHtml);
     }).join("");
     const docs = (cfg.docs||[]).length ? NS._section("Uploaded documents",
-      `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${cfg.docs.map(d=>NS._fileLink(d.label, r[d.key] || (d.altKey ? r[d.altKey] : null), d.pathKey ? r[d.pathKey] : null)).join("")}</div>`) : "";
+      `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${cfg.docs.map(d=>NS._fileLink(d.label, r[d.key] || (d.altKey ? r[d.altKey] : null), d.pathKey ? r[d.pathKey] : null, cfg.bucket)).join("")}</div>`) : "";
     const acts = (r.activities||[]).slice().reverse().slice(0,12).map(a=>
       `<div style="display:flex;gap:8px;padding:4px 0;font-size:11.5px;color:var(--ink-600)"><span style="color:var(--ink-400);flex:0 0 64px">${a.at?fmtTime(a.at):""}</span><span>${escapeHtml(a.text||a.type||"")}</span></div>`
     ).join("") || `<div style="font-size:11.5px;color:var(--ink-400)">No activity yet.</div>`;
@@ -10810,7 +10823,8 @@ LF.partners = LF.entities.make({
     { title:"2 · Profile", rows:[["Current role / profession","profession"],["Company (if any)","companyName"],["Networks / industry connections",(r)=>LF.entities._arr(r.networks)],["Services interested in",(r)=>LF.entities._arr(r.servicesInterested)],["Regions they bring clients from",(r)=>LF.entities._arr(r.sourceRegions)],["Intro volume (6 months)","introVolume"],["Preferred earning model",(r)=>LF.entities._arr(r.earningModel)]] },
     { title:"3 · About", rows:[["About network / why partner","aboutNetwork"],["How they heard","howHeard"],["Declaration accepted",(r)=>r.declarationAccepted?"Yes":"No"]] }
   ],
-  docs:[ { label:"Profile / CV", key:"profileFileLink" }, { label:"Portfolio", key:"portfolioFileLink" } ],
+  bucket:"partner-docs",
+  docs:[ { label:"Profile / CV", key:"profileFileLink", pathKey:"profileFileUrl" }, { label:"Portfolio", key:"portfolioFileLink", pathKey:"portfolioFileUrl" } ],
   addFields:[
     { key:"fullName", label:"Full name", required:true, placeholder:"Jane Doe" },
     { key:"email", label:"Email", placeholder:"jane@company.com" },
@@ -10862,6 +10876,7 @@ LF.jobApplicants = LF.entities.make({
     { title:"1 · Contact", rows:[["Full name","fullName"],["Email","email"],["Phone","phone"],["WhatsApp","whatsapp"],["Current location","currentLocation"],["Country","country"],["LinkedIn","linkedin"],["Portfolio","portfolio"]] },
     { title:"2 · Application", rows:[["Role applied for","roleApplied"],["Experience (years)","experienceYears"],["Notice period","noticePeriod"],["Expected salary","expectedSalary"],["Cover note","coverNote"],["How they heard","howHeard"]] }
   ],
+  bucket:"job-resumes",
   docs:[ { label:"Resume / CV", key:"resumeFileUrl", altKey:"resumeLink", pathKey:"resumePath" } ],
   addFields:[
     { key:"fullName", label:"Full name", required:true, placeholder:"John Doe" },

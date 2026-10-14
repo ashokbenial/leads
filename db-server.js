@@ -299,6 +299,54 @@ app.post('/api/config', h(async (req,res)=>{ await saveConfig(req.body || {}); r
 // its leads/tasks/subvendors are ignored here (those must use per-record routes).
 app.post('/api/snapshot', h(async (req,res)=>{ await saveConfig(req.body || {}); res.json({ ok:true, note:'config-only; use per-record routes for leads/tasks' }); }));
 
+// ---------- Website consultation leads ----------
+// Fed by the ab7solutions.com "Free Consultation" form (/api/consultation).
+// Lands in Leads as an unassigned "Consultation Form" lead at stage New.
+function normalizeWebsiteLead(b){
+  b = b || {};
+  const createdAt = _submittedAt(b);
+  const name = String(_pick(b, 'full_name','fullName','name')).trim();
+  const parts = name.split(/\s+/).filter(Boolean);
+  const service = String(_pick(b, 'service_type','serviceType','service')).trim();
+  const requirements = String(_pick(b, 'requirements','message','notes')).trim();
+  const pageUrl = String(_pick(b, 'page_url','pageUrl')).trim();
+  const notes = [
+    service && ('Service: ' + service),
+    requirements && ('Requirements: ' + requirements),
+    pageUrl && ('Submitted from: ' + pageUrl)
+  ].filter(Boolean).join('\n\n');
+  const lead = {
+    id: 'id_' + Math.random().toString(36).slice(2,10),
+    firstName: parts[0] || '', lastName: parts.slice(1).join(' '), name,
+    email: String(_pick(b, 'email')).trim(),
+    phone: String(_pick(b, 'phone')).trim(),
+    company: String(_pick(b, 'company')).trim(),
+    industry: '', city: '', country: '',
+    source: 'Consultation Form', stage: 'New', ownerId: null,
+    amount: 0, currency: 'INR', notes,
+    tags: ['website', 'consultation'],
+    consent: { email:true, whatsapp:false, sms:false },
+    activities: [{ type:'create', at: createdAt, by: null,
+      text: 'Consultation request received from website' + (service ? ' — ' + service : '') }],
+    createdAt, updatedAt: Date.now()
+  };
+  lead.score = 5 + 15 + (lead.phone ? 3 : 0) + (lead.notes ? 3 : 0) + 7;
+  return lead;
+}
+
+app.post('/api/leads/ingest', h(async (req,res)=>{
+  if(!requireIngestAuth(req, res)) return;
+  const lead = normalizeWebsiteLead(req.body);
+  if(!lead.name && !lead.email){
+    return res.status(400).json({ ok:false, error:'full_name or email required' });
+  }
+  const dupe = await repo.leadEmailSeenRecently(lead.email, 60000);
+  if(dupe){ return res.json({ ok:true, id:dupe, deduped:true }); }
+  await repo.createLead(lead);
+  console.log('[lead] ingested:', lead.name, '·', lead.email);
+  res.json({ ok:true, id:lead.id });
+}));
+
 // ---------- Per-record writes (atomic; concurrent-safe) ----------
 app.post('/api/leads', h(async (req,res)=>{ res.json(await repo.createLead(req.body || {})); }));
 app.put('/api/leads/:id', h(async (req,res)=>{
@@ -541,6 +589,23 @@ app.put('/api/postings/:id', h(async (req,res)=>{
   res.json(r);
 }));
 app.delete('/api/postings/:id', h(async (req,res)=>{ await repo.deleteJobPosting(req.params.id); res.json({ ok:true }); }));
+
+// Uploaded documents (resumes, vendor/partner docs). The website hands the CRM a
+// signed URL that expires after 7 days, so a stored link goes dead with
+// "exp claim timestamp check failed". Re-sign the stored storage PATH on every
+// click instead and redirect to a short-lived URL.
+const FILE_BUCKETS = new Set(['job-resumes', 'vendor-docs', 'partner-docs']);
+app.get('/api/files/:bucket', h(async (req,res)=>{
+  const bucket = req.params.bucket;
+  const p = String(req.query.path || '');
+  if(!FILE_BUCKETS.has(bucket) || !p || p.includes('..') || /^https?:/i.test(p)){
+    return res.status(400).json({ error:'Invalid file reference' });
+  }
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(p, 300);
+  if(error || !data?.signedUrl) return res.status(404).json({ error:'File not found' });
+  res.setHeader('Cache-Control','no-store');
+  res.redirect(302, data.signedUrl);
+}));
 
 // Settings — read the assembled settings object; write a single key.
 // Config collections (serviceDomains, scoringRules, picklists, …) are routed to

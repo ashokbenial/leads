@@ -404,6 +404,14 @@ module.exports = function makeRepo(supabase) {
     return (data && data[0]) ? data[0].id : null;
   }
 
+  async function leadEmailSeenRecently(email, withinMs) {
+    if (!email) return null;
+    const cutoff = new Date(Date.now() - withinMs).toISOString();
+    const { data } = await supabase.from('leads').select('id')
+      .ilike('email', email).gte('created_at', cutoff).limit(1);
+    return (data && data[0]) ? data[0].id : null;
+  }
+
   // Partners / job applicants (light tables; keep full payload in details).
   async function createPartner(p) {
     const row = { id: p.id, tenant_id: TENANT, stage: p.stage || 'New', company_name: p.companyName ?? null,
@@ -587,7 +595,7 @@ module.exports = function makeRepo(supabase) {
 
   return {
     TENANT, assembleState, counts, hasAdminWithCreds,
-    createLead, updateLead, deleteLead, addLeadActivity, replaceLeadActivities,
+    createLead, updateLead, deleteLead, addLeadActivity, leadEmailSeenRecently, replaceLeadActivities,
     createTask, updateTask, deleteTask,
     createSubvendor, updateSubvendor, deleteSubvendor, subvendorEmailSeenRecently,
     createPartner, createJobApplicant,
